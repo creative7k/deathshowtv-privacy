@@ -19,10 +19,11 @@ Sans configuration, l'app tourne en **mode démo** (données locales, bandeau «
 3. **Authentication → Sign In / Providers** : activer **Allow anonymous sign-ins**.
 4. **Database → Publications** : vérifier que la table `events` est cochée dans `supabase_realtime`
    (la migration l'ajoute automatiquement si la publication existe).
-5. Pour le worker : voir `worker/README.md` (tourne gratuitement sur ton PC ; les clips vont dans le
+5. `app/.env` contient déjà l'URL et la clé publique du projet Strange Cams. Pour un autre projet,
+   remplacer ces deux valeurs.
+6. Pour le worker : voir `worker/README.md` (tourne gratuitement sur ton PC ; les clips vont dans le
    stockage Supabase, bucket `media` créé par la migration).
-6. Copier `app/.env.example` en `app/.env.local` et y mettre l'URL et la clé publique
-   (**Project Settings → API**). Relancer `npx expo start --clear`.
+   Relancer `npx expo start --clear` après tout changement de `.env`.
 
 Règle de création d'un événement : **3 personnes différentes** signalent la même caméra en moins de
 2 minutes. Un signalement suivant (dans les 10 minutes) rejoint l'événement existant. Une personne
