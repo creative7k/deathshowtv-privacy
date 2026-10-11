@@ -27,8 +27,8 @@
                     └──────┬──────────────────────┬───────┘
                            │ clips                │ métadonnées
                     ┌──────▼──────┐        ┌──────▼──────────────────┐
-                    │ Cloudflare  │        │ Supabase (Postgres)     │
-                    │ R2 + CDN    │        │ cameras, events,        │
+                    │ Stockage    │        │ Supabase (Postgres)     │
+                    │ (Supabase)  │        │ cameras, events,        │
                     └──────┬──────┘        │ reports, votes, Realtime│
                            │               └──────┬──────────────────┘
                            │   HLS/MP4            │ API + temps réel
@@ -57,6 +57,8 @@
 - Utilisateurs : **auth anonyme Supabase** (aucune inscription pour le MVP)
 
 ## Estimation des coûts (ordres de grandeur, à confirmer)
+
+> Pour démarrer à **0 €**, voir `docs/03-plan-gratuit.md`.
 
 | Poste | MVP (≤ 1 000 utilisateurs) | Croissance (~50 000 utilisateurs actifs/mois) |
 |---|---|---|
