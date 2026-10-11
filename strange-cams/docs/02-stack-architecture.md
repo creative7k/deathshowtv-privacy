@@ -7,7 +7,7 @@
 | Mobile | **React Native + Expo** (TypeScript), `expo-video` pour la lecture | Un seul code pour iOS et Android. `expo-video` utilise les lecteurs natifs AVPlayer et ExoPlayer : HLS natif, sans logo et sans dépendance tierce. Feed vertical en `FlatList` paginé : seul l'élément visible joue, les voisins sont préchargés |
 | Backend données | **Supabase** (Postgres, auth anonyme, Realtime, Storage) | Signalements, votes et feed en SQL, plus le temps réel pour les compteurs de votes et, en phase 2, les alertes collectives. Aucun serveur à gérer pour le MVP |
 | Ingestion (worker) | **Node.js (TypeScript) + ffmpeg**, sur un petit VPS (Fly.io, Railway ou Hetzner) | Interroge les sources « image » (toutes les 30 à 120 s), archive les images, fabrique les clips MP4/HLS. Pour Caltrans, enregistre les segments HLS autour d'un signalement |
-| Stockage vidéo et CDN | **Cloudflare R2** (compatible S3, **egress gratuit**) | Les clips du feed sont servis depuis notre propre domaine : pas de hotlink vers les institutions, pas de logo tiers |
+| Stockage vidéo et CDN | **Supabase Storage** (gratuit, 1 Go) au départ, puis **Cloudflare R2** (compatible S3, egress gratuit) si l’audience grandit | Les clips du feed sont servis depuis notre propre domaine : pas de hotlink vers les institutions, pas de logo tiers |
 | Relais live (Caltrans) | **MediaMTX** auto-hébergé (open source) sur le même VPS, **ou** Castr | Respecte la « fair use » de Caltrans : 1 connexion vers eux par caméra, N spectateurs chez nous. MediaMTX coûte 0 € en plus du VPS ; Castr est plus simple, mais payant |
 | Phase 2 – détection | **Worker Python** (OpenCV : soustraction de fond MOG2 et différence d'images), puis **modèle de vision** (API Claude) uniquement sur les images candidates | Le filtre OpenCV, gratuit, écarte 95 à 99 % des images. Le modèle de vision ne voit que les anomalies, ce qui maîtrise le coût |
 | Phase 2 – alertes collectives | Supabase Realtime (broadcast) + **Expo Push Notifications** | « Tout le monde sur la même caméra » = un message broadcast `{eventId}`. Les apps ouvertes basculent, les autres reçoivent un push |
@@ -44,7 +44,7 @@
 
 1. Un utilisateur regarde une caméra et appuie sur **« Signaler »** (type, plus un commentaire optionnel).
 2. Le backend agrège les signalements par caméra sur une fenêtre de 2 min. Au-delà d'un **seuil** (par exemple 3 signalements, ou 1 seul avec validation admin pour l'amorçage), un `event` est créé.
-3. Le worker fabrique le clip : les N images avant et après le signalement en time-lapse, ou les segments HLS enregistrés pour Caltrans. Il l'envoie sur R2.
+3. Le worker fabrique le clip : les N images avant et après le signalement en time-lapse, ou les segments HLS enregistrés pour Caltrans. Il l’envoie sur le stockage (Supabase Storage, puis R2 si besoin).
 4. L'event apparaît dans le feed. Les utilisateurs votent 👍 ou 👎, et le score modifie le classement.
 5. **Ordre du feed à l'ouverture** : l'événement le plus spectaculaire (score de votes pondéré par la fraîcheur), puis l'alerte en cours la plus haute, puis l'aléatoire. Les alertes arrivent en phase 2, mais le tri est prévu dès le MVP.
 

@@ -237,3 +237,16 @@ begin
     alter publication supabase_realtime add table public.events;
   end if;
 end $$;
+
+-- ---------------------------------------------------------------------------
+-- Stockage des clips (offre gratuite : 1 Go) : bucket public en lecture,
+-- écrit uniquement par le worker avec la clé service_role.
+-- ---------------------------------------------------------------------------
+do $$
+begin
+  if exists (select 1 from information_schema.tables where table_schema = 'storage' and table_name = 'buckets') then
+    insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+    values ('media', 'media', true, 52428800, array['video/mp4', 'image/jpeg'])
+    on conflict (id) do nothing;
+  end if;
+end $$;

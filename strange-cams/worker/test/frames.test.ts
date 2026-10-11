@@ -42,3 +42,13 @@ test('webcam image is found on an HTML page', () => {
   );
   assert.equal(findWebcamImage('<img src="/logo.jpg">', 'https://example.gov/'), null);
 });
+
+test('storage pruning selects only objects older than the cutoff', async () => {
+  const { expired } = await import('../src/storage.ts');
+  const objects = [
+    { name: 'old.mp4', created_at: '2026-10-01T00:00:00Z' },
+    { name: 'new.mp4', created_at: '2026-10-10T00:00:00Z' },
+    { name: 'folder', created_at: null },
+  ];
+  assert.deepEqual(expired(objects, Date.parse('2026-10-05T00:00:00Z')), ['old.mp4']);
+});

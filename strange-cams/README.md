@@ -4,6 +4,7 @@ App mobile (iOS + Android) : un feed vertical façon TikTok qui ne montre **que 
 
 - `docs/01-audit-sources.md` : audit des sources (type de flux, URL, licence, verdict)
 - `docs/02-stack-architecture.md` : stack, architecture, coûts, plan par étapes
+- `docs/03-plan-gratuit.md` : faire tourner le MVP à 0 € (Supabase Free, worker sur ton PC, Expo)
 - `app/` : application Expo (React Native, TypeScript)
 - `supabase/` : schéma de la base (migrations), caméras de départ (`seed.sql`), tests SQL
 - `worker/` : service d'ingestion (images, enregistrement des flux live, fabrication des clips) — voir `worker/README.md`
@@ -18,7 +19,9 @@ Sans configuration, l'app tourne en **mode démo** (données locales, bandeau «
 3. **Authentication → Sign In / Providers** : activer **Allow anonymous sign-ins**.
 4. **Database → Publications** : vérifier que la table `events` est cochée dans `supabase_realtime`
    (la migration l'ajoute automatiquement si la publication existe).
-5. Copier `app/.env.example` en `app/.env.local` et y mettre l'URL et la clé publique
+5. Pour le worker : voir `worker/README.md` (tourne gratuitement sur ton PC ; les clips vont dans le
+   stockage Supabase, bucket `media` créé par la migration).
+6. Copier `app/.env.example` en `app/.env.local` et y mettre l'URL et la clé publique
    (**Project Settings → API**). Relancer `npx expo start --clear`.
 
 Règle de création d'un événement : **3 personnes différentes** signalent la même caméra en moins de

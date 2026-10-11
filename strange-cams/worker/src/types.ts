@@ -24,6 +24,8 @@ export interface EventStore {
 /** Where clips are published (S3-compatible bucket in production, a folder in dev/tests). */
 export interface MediaStorage {
   put(key: string, file: string, contentType: string): Promise<string>;
+  /** Deletes clips and posters older than `maxAgeMs` (free plans have little storage). Optional. */
+  prune?(maxAgeMs: number): Promise<number>;
 }
 
 export type Logger = (msg: string, extra?: Record<string, unknown>) => void;

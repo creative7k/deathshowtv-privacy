@@ -4,7 +4,7 @@ import { FrameBuffer, imageWindow } from './frames.ts';
 import { HlsRecorder } from './hls.ts';
 import { ImagePoller } from './poller.ts';
 import { resolveImageUrl } from './resolve.ts';
-import { LocalStorage, S3Storage } from './storage.ts';
+import { LocalStorage, S3Storage, SupabaseStorage } from './storage.ts';
 import { SupabaseStore } from './store.ts';
 import type { Logger, MediaStorage } from './types.ts';
 
@@ -26,8 +26,12 @@ function makeStorage(): MediaStorage {
       publicBaseUrl: required('MEDIA_PUBLIC_BASE_URL'),
     });
   }
-  log('S3_BUCKET not set: clips are written to DATA_DIR/media (dev only)');
-  return new LocalStorage(path.join(dataDir, 'media'), process.env.MEDIA_PUBLIC_BASE_URL ?? 'http://localhost:8090');
+  if (process.env.MEDIA_LOCAL_DIR) {
+    log('clips are written to MEDIA_LOCAL_DIR (dev only)');
+    return new LocalStorage(process.env.MEDIA_LOCAL_DIR, process.env.MEDIA_PUBLIC_BASE_URL ?? 'http://localhost:8090');
+  }
+  // Default, free: the project's own Supabase Storage.
+  return new SupabaseStorage(store.sb);
 }
 
 const dataDir = process.env.DATA_DIR ?? path.resolve('data');
@@ -57,7 +61,21 @@ for (const camera of await store.listCameras()) {
 
 log('ingest started', { cameras: sources.size });
 
-const clipper = new Clipper(store, makeStorage(), sources, path.join(dataDir, 'work'), log);
+const storage = makeStorage();
+const clipper = new Clipper(store, storage, sources, path.join(dataDir, 'work'), log);
+
+// Keep stored clips within the free quota: the feed only shows the last 48 h anyway.
+const retentionMs = Number(process.env.CLIP_RETENTION_DAYS ?? 3) * 24 * 3_600_000;
+const prune = async () => {
+  try {
+    const n = (await storage.prune?.(retentionMs)) ?? 0;
+    if (n > 0) log('pruned old clips', { files: n });
+  } catch (e) {
+    log('prune failed', { error: String(e) });
+  }
+};
+void prune();
+setInterval(prune, 3_600_000);
 const loop = async () => {
   try {
     await clipper.runOnce();

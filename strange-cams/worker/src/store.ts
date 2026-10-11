@@ -3,7 +3,7 @@ import type { Camera, EventStore, PendingEvent } from './types.ts';
 
 /** Server-side access with the service-role key (bypasses RLS: never ship this key in the app). */
 export class SupabaseStore implements EventStore {
-  private readonly sb: SupabaseClient;
+  readonly sb: SupabaseClient;
 
   constructor(url: string, serviceRoleKey: string) {
     this.sb = createClient(url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
