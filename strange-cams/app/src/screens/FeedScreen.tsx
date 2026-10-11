@@ -1,35 +1,42 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { FlatList, StyleSheet, Text, useWindowDimensions, View, type ViewToken } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View, type ViewToken } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { CategoryId, FeedEvent, ReportType } from '../types';
-import { DEMO_EVENTS } from '../data/demoEvents';
-import { cameraById } from '../data/cameras';
-import { orderFeed } from '../feed/ranking';
+import type { Camera, CategoryId, FeedEvent, ReportType } from '../types';
+import { useFeed } from '../feed/useFeed';
 import { FeedItem } from '../components/FeedItem';
 import { CategoryBar } from '../components/CategoryBar';
 import { ReportSheet } from '../components/ReportSheet';
-import type { Vote } from '../components/ActionRail';
 
 const VIEWABILITY = { itemVisiblePercentThreshold: 60 };
 
-const matches = (e: FeedEvent, cat: CategoryId | null) =>
-  cat === null || (cat === 'paranormal' ? e.paranormal : cameraById(e.cameraId).category === cat);
+const matches = (e: FeedEvent, camera: Camera, cat: CategoryId | null) =>
+  cat === null || (cat === 'paranormal' ? e.paranormal : camera.category === cat);
+
+const REPORT_MESSAGES = {
+  event: 'Événement confirmé · il arrive dans le feed !',
+  recorded: 'Signalement envoyé · merci !',
+  'rate-limited': 'Tu as déjà signalé cette caméra, réessaie dans 2 min',
+} as const;
 
 export function FeedScreen() {
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const feed = useFeed();
 
   const [category, setCategory] = useState<CategoryId | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [votes, setVotes] = useState<Record<string, Vote>>({});
   const [reporting, setReporting] = useState<FeedEvent | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const listRef = useRef<FlatList<FeedEvent>>(null);
 
-  // Ordered once per session: the "random" tail must not reshuffle on every render.
-  const [openedAt] = useState(() => Date.now());
-  const [ordered] = useState(() => orderFeed(DEMO_EVENTS, openedAt));
-  const events = useMemo(() => ordered.filter((e) => matches(e, category)), [ordered, category]);
+  const events = useMemo(
+    () =>
+      feed.events.filter((e) => {
+        const camera = feed.cameras[e.cameraId];
+        return camera !== undefined && matches(e, camera, category);
+      }),
+    [feed.events, feed.cameras, category],
+  );
 
   // Must keep a stable identity: FlatList does not support changing it on the fly.
   const onViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: ViewToken<FeedEvent>[] }) => {
@@ -43,12 +50,21 @@ export function FeedScreen() {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, []);
 
-  const submitReport = (type: ReportType) => {
-    // Step 3 sends this to Supabase; for now it is only acknowledged locally.
-    void type;
+  const showToast = (message: string) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 2500);
+  };
+
+  const submitReport = async (type: ReportType) => {
+    if (!reporting) return;
+    const cameraId = reporting.cameraId;
     setReporting(null);
-    setToast('Signalement envoyé · merci !');
-    setTimeout(() => setToast(null), 2200);
+    try {
+      const result = await feed.report(cameraId, type);
+      showToast(REPORT_MESSAGES[result.status]);
+    } catch {
+      showToast('Envoi impossible, vérifie ta connexion');
+    }
   };
 
   return (
@@ -60,17 +76,18 @@ export function FeedScreen() {
         renderItem={({ item, index }) => (
           <FeedItem
             event={item}
+            camera={feed.cameras[item.cameraId]}
             height={height}
             active={index === activeIndex}
             mounted={Math.abs(index - activeIndex) <= 1}
-            myVote={votes[item.id] ?? 0}
-            now={openedAt}
+            myVote={feed.myVotes[item.id] ?? 0}
+            now={feed.openedAt}
             bottomInset={insets.bottom}
-            onVote={(v) => setVotes((prev) => ({ ...prev, [item.id]: v }))}
+            onVote={(v) => void feed.vote(item.id, v)}
             onReport={() => setReporting(item)}
           />
         )}
-        extraData={{ activeIndex, votes }}
+        extraData={{ activeIndex, myVotes: feed.myVotes }}
         pagingEnabled
         snapToInterval={height}
         decelerationRate="fast"
@@ -82,7 +99,18 @@ export function FeedScreen() {
         initialNumToRender={2}
         ListEmptyComponent={
           <View style={[styles.empty, { height }]}>
-            <Text style={styles.emptyText}>Rien d’étrange ici pour l’instant…</Text>
+            {feed.status === 'loading' ? (
+              <ActivityIndicator color="#fff" />
+            ) : feed.status === 'error' ? (
+              <>
+                <Text style={styles.emptyText}>Impossible de charger le feed</Text>
+                <Pressable onPress={() => void feed.reload()} style={styles.retry}>
+                  <Text style={styles.retryText}>Réessayer</Text>
+                </Pressable>
+              </>
+            ) : (
+              <Text style={styles.emptyText}>Rien d’étrange ici pour l’instant…</Text>
+            )}
           </View>
         }
       />
@@ -90,7 +118,7 @@ export function FeedScreen() {
       <View style={[styles.top, { paddingTop: insets.top + 8 }]} pointerEvents="box-none">
         <Text style={styles.logo}>STRANGE CAMS</Text>
         <CategoryBar selected={category} onSelect={selectCategory} />
-        <Text style={styles.demo}>Données de démonstration · étape 1</Text>
+        {feed.mode === 'demo' && <Text style={styles.demo}>Données de démonstration</Text>}
       </View>
 
       {toast && (
@@ -101,9 +129,9 @@ export function FeedScreen() {
 
       <ReportSheet
         visible={reporting !== null}
-        cameraName={reporting ? cameraById(reporting.cameraId).name : ''}
+        cameraName={reporting ? (feed.cameras[reporting.cameraId]?.name ?? '') : ''}
         onClose={() => setReporting(null)}
-        onSubmit={submitReport}
+        onSubmit={(type) => void submitReport(type)}
       />
     </View>
   );
@@ -114,8 +142,10 @@ const styles = StyleSheet.create({
   top: { position: 'absolute', top: 0, left: 0, right: 0, gap: 8 },
   logo: { color: '#fff', fontSize: 15, fontWeight: '900', letterSpacing: 3, textAlign: 'center' },
   demo: { color: 'rgba(255,255,255,0.55)', fontSize: 11, textAlign: 'center' },
-  empty: { alignItems: 'center', justifyContent: 'center' },
+  empty: { alignItems: 'center', justifyContent: 'center', gap: 12 },
   emptyText: { color: '#8A93A6', fontSize: 16 },
+  retry: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, backgroundColor: '#222736' },
+  retryText: { color: '#fff', fontWeight: '700' },
   toast: {
     position: 'absolute',
     alignSelf: 'center',

@@ -1,14 +1,15 @@
 import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import type { FeedEvent } from '../types';
-import { cameraById } from '../data/cameras';
+import type { Camera, FeedEvent } from '../types';
 import { categoryById } from '../data/categories';
 import { ooiWindow } from '../feed/schedule';
 import { CameraMedia } from './CameraMedia';
-import { ActionRail, type Vote } from './ActionRail';
+import { ActionRail } from './ActionRail';
+import type { Vote } from '../api/feedApi';
 
 type Props = {
   event: FeedEvent;
+  camera: Camera;
   height: number;
   active: boolean;
   /** Only the active item and its neighbours mount a player. */
@@ -30,6 +31,7 @@ const ago = (ms: number) => {
 
 export const FeedItem = memo(function FeedItem({
   event,
+  camera,
   height,
   active,
   mounted,
@@ -39,7 +41,6 @@ export const FeedItem = memo(function FeedItem({
   onVote,
   onReport,
 }: Props) {
-  const camera = cameraById(event.cameraId);
   const category = categoryById(camera.category);
   const isLive =
     camera.feed.kind === 'hls' &&

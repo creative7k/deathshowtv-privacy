@@ -1,6 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-
-export type Vote = 1 | -1 | 0;
+import type { Vote } from '../api/feedApi';
 
 type Props = {
   votesUp: number;
@@ -18,14 +17,14 @@ export function ActionRail({ votesUp, votesDown, myVote, onVote, onReport }: Pro
     <View style={styles.rail}>
       <Action
         icon="👍"
-        label={compact(votesUp + (myVote === 1 ? 1 : 0))}
+        label={compact(votesUp)}
         caption="Vrai"
         selected={myVote === 1}
         onPress={() => onVote(myVote === 1 ? 0 : 1)}
       />
       <Action
         icon="👎"
-        label={compact(votesDown + (myVote === -1 ? 1 : 0))}
+        label={compact(votesDown)}
         caption="Faux"
         selected={myVote === -1}
         onPress={() => onVote(myVote === -1 ? 0 : -1)}
