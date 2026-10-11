@@ -48,7 +48,7 @@ export const FeedItem = memo(function FeedItem({
 
   return (
     <View style={[styles.item, { height }]}>
-      {mounted ? <CameraMedia camera={camera} active={active} /> : null}
+      {mounted ? <CameraMedia camera={camera} clipUrl={event.clipUrl} active={active} /> : null}
       <View style={styles.shade} pointerEvents="none" />
 
       <View style={[styles.bottom, { paddingBottom: bottomInset + 20 }]} pointerEvents="box-none">
@@ -56,7 +56,15 @@ export const FeedItem = memo(function FeedItem({
           <View style={styles.badges}>
             <Badge text={`${category.emoji} ${category.label}`} color={category.color} />
             {event.paranormal && <Badge text="👁️ Paranormal" color={categoryById('paranormal').color} />}
-            <Badge text={isLive ? '● LIVE' : camera.feed.kind === 'hls' ? '◌ HORS DIRECT' : '◷ TIME-LAPSE'} color={isLive ? '#FF3B5C' : '#9AA4B8'} solid={isLive} />
+            {event.clipUrl ? (
+              <Badge text={camera.feed.kind === 'hls' ? '▶ REPLAY' : '◷ TIME-LAPSE'} color="#9AA4B8" />
+            ) : (
+              <Badge
+                text={isLive ? '● LIVE' : camera.feed.kind === 'hls' ? '◌ HORS DIRECT' : '◉ EN DIRECT'}
+                color={isLive ? '#FF3B5C' : '#9AA4B8'}
+                solid={isLive}
+              />
+            )}
             {event.alertActive && <Badge text={`⚠ ALERTE ${event.alertLevel}`} color="#FFB020" solid />}
           </View>
           <Text style={styles.title}>{event.title}</Text>

@@ -77,7 +77,17 @@ export function useFeed() {
         const row = rowToEvent(payload.new as EventRow);
         setState((s) => ({
           ...s,
-          events: s.events.map((e) => (e.id === row.id ? { ...e, votesUp: row.votesUp, votesDown: row.votesDown, alertLevel: row.alertLevel, alertActive: row.alertActive } : e)),
+          events: s.events.map((e) => (e.id === row.id
+              ? {
+                  ...e,
+                  votesUp: row.votesUp,
+                  votesDown: row.votesDown,
+                  alertLevel: row.alertLevel,
+                  alertActive: row.alertActive,
+                  clipUrl: row.clipUrl,
+                  posterUrl: row.posterUrl,
+                }
+              : e)),
         }));
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'events' }, (payload) => {

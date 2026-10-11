@@ -53,6 +53,9 @@ export type FeedEvent = {
   /** 0 = no alert, 1..3 = collective alert level (phase 2). */
   alertLevel: 0 | 1 | 2 | 3;
   alertActive: boolean;
+  /** Clip of the moment (time-lapse or recorded live), produced by the ingest worker. */
+  clipUrl?: string | null;
+  posterUrl?: string | null;
 };
 
 export type ReportType =

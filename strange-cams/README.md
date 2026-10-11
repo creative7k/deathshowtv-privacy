@@ -6,6 +6,7 @@ App mobile (iOS + Android) : un feed vertical façon TikTok qui ne montre **que 
 - `docs/02-stack-architecture.md` : stack, architecture, coûts, plan par étapes
 - `app/` : application Expo (React Native, TypeScript)
 - `supabase/` : schéma de la base (migrations), caméras de départ (`seed.sql`), tests SQL
+- `worker/` : service d'ingestion (images, enregistrement des flux live, fabrication des clips) — voir `worker/README.md`
 
 ## Brancher Supabase
 
@@ -50,5 +51,6 @@ supabase/tests/run-local.sh   # tests du schéma sur un Postgres local (createdb
 - [x] Étape 1 : feed vertical plein écran, 8 catégories, lecteur HLS natif / images rafraîchies, vote et signalement (état local, données de démo)
 - [x] Étape 2 : Supabase (schéma, RLS, auth anonyme, API du feed), testé sur Postgres local
 - [x] Étape 3 : signalement → événement, vote vrai/faux, compteurs en temps réel (code prêt, à valider sur un vrai projet Supabase)
-- [ ] Étape 4 : worker d'ingestion (images → clips time-lapse, relais HLS)
+- [x] Étape 4 : worker d'ingestion (images → clips time-lapse, replay des flux live), testé avec des sources simulées
+- [ ] Relais live pour les spectateurs : l'app lit encore les flux HLS directement chez Caltrans / OOI (à faire passer par notre relais avant la mise en prod)
 - [ ] Phase 2 : détection IA, alertes collectives, floutage

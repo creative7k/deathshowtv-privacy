@@ -6,10 +6,14 @@ import { Image } from 'expo-image';
 import type { Camera } from '../types';
 import { ooiWindow } from '../feed/schedule';
 
-type Props = { camera: Camera; active: boolean };
+type Props = { camera: Camera; clipUrl?: string | null; active: boolean };
 
-/** Full-screen media for a camera: our own native player for HLS, refreshed image otherwise. */
-export function CameraMedia({ camera, active }: Props) {
+/**
+ * Full-screen media for an event: its clip when the worker has produced one,
+ * otherwise the camera itself (our own native player for HLS, refreshed image for stills).
+ */
+export function CameraMedia({ camera, clipUrl, active }: Props) {
+  if (clipUrl) return <Clip url={clipUrl} active={active} />;
   if (camera.feed.kind === 'hls') {
     return <LiveStream url={camera.feed.url} ooi={camera.feed.schedule === 'ooi-every-3h'} active={active} />;
   }
@@ -42,6 +46,26 @@ function LiveStream({ url, ooi, active }: { url: string; ooi: boolean; active: b
         />
       )}
       {status === 'loading' && <Fallback title="Connexion au direct…" />}
+    </View>
+  );
+}
+
+function Clip({ url, active }: { url: string; active: boolean }) {
+  const player = useVideoPlayer(url, (p) => {
+    p.muted = true;
+    p.loop = true;
+  });
+  const { status } = useEvent(player, 'statusChange', { status: player.status });
+
+  useEffect(() => {
+    if (active) player.play();
+    else player.pause();
+  }, [active, player]);
+
+  return (
+    <View style={StyleSheet.absoluteFill}>
+      <VideoView style={StyleSheet.absoluteFill} player={player} contentFit="cover" nativeControls={false} />
+      {status === 'error' && <Fallback title="Clip indisponible" />}
     </View>
   );
 }

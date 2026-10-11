@@ -26,6 +26,8 @@ export type EventRow = {
   votes_down: number;
   alert_level: number;
   alert_active: boolean;
+  clip_url: string | null;
+  poster_url: string | null;
 };
 
 export function rowToCamera(r: CameraRow): Camera {
@@ -57,6 +59,8 @@ export function rowToEvent(r: EventRow): FeedEvent {
     votesDown: r.votes_down,
     alertLevel: Math.max(0, Math.min(3, r.alert_level)) as FeedEvent['alertLevel'],
     alertActive: r.alert_active,
+    clipUrl: r.clip_url,
+    posterUrl: r.poster_url,
   };
 }
 

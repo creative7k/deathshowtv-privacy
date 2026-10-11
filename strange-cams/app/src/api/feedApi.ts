@@ -25,7 +25,7 @@ export async function loadFeed(sb: SupabaseClient): Promise<{
     sb.from('cameras').select('*'),
     sb
       .from('events')
-      .select('id, camera_id, origin, title, description, paranormal, started_at, votes_up, votes_down, alert_level, alert_active')
+      .select('id, camera_id, origin, title, description, paranormal, started_at, votes_up, votes_down, alert_level, alert_active, clip_url, poster_url')
       .gte('started_at', since)
       .order('started_at', { ascending: false })
       .limit(200),

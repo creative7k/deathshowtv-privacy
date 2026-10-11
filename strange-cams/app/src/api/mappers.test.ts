@@ -15,6 +15,8 @@ const event = rowToEvent({
   votes_down: 2,
   alert_level: 7,
   alert_active: false,
+  clip_url: null,
+  poster_url: null,
 } satisfies EventRow);
 
 test('event rows are converted and alert level is clamped', () => {
