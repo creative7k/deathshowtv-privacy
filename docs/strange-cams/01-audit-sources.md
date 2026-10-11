@@ -36,6 +36,19 @@ Ma recommandation : **A pour le MVP, B en parallèle**. Le player affiche un vra
 | 7b | **Australian Antarctic Division** | Images fixes (Mawson, Casey, Davis, Macquarie, navire *Nuyina*, « krillcam ») + time-lapse | `antarctica.gov.au/antarctic-operations/webcams/` | © Commonwealth of Australia. Les jeux de données AAD sont en **CC BY 4.0** ; la licence des webcams du site est **à confirmer** (probablement CC BY, avec **attribution textuelle** obligatoire, sans logo) | ⚠️ **Probablement OK avec crédit**, à confirmer |
 | 8 | **Paranormal** | Aucune source propre : agrège les autres catégories | — | Hérite de la licence de chaque source | ✅ |
 
+## Remplaçants retenus (validés le 11/10/2026)
+
+Tu as choisi les 8 catégories dès le MVP. Pour les catégories bloquées, voici les remplaçants que j'ai vérifiés :
+
+| Catégorie | Remplaçant | Type de flux réel | URL technique (vérifiée) | Licence | Verdict |
+|---|---|---|---|---|---|
+| **Espace** (remplace NASA) | **NOAA GOES-19 (GOES-East)** : Terre entière, États-Unis, secteurs « méso » (orages, ouragans) | Images JPEG : CONUS toutes les **5 min**, Terre entière toutes les **10 min**, méso toutes les 1 min. GIF animés fournis | `cdn.star.nesdis.noaa.gov/GOES19/ABI/FD/GEOCOLOR/{AAAAJJJHHMM}_GOES19-ABI-FD-GEOCOLOR-1808x1808.jpg` (pages `star.nesdis.noaa.gov/goes/`) | Œuvre fédérale NOAA = domaine public | ✅ **OK (images)** |
+| **Fonds marins** (remplace Okeanos) | **OOI Regional Cabled Array – CAMHD**, cheminée hydrothermale du volcan sous-marin Axial Seamount, à 1 500 m de fond (NSF / University of Washington) | ✅ **Vraie vidéo HLS en direct**, **14 min toutes les 3 h** (2 h, 5 h, 8 h, 11 h, heure du Pacifique, jour et nuit), plus 24 h d'affilée les 10 et 20 du mois et 72 h du 1er au 3. Toutes les vidéos sont archivées | Live : `https://stream.ocean.washington.edu/camhdLive/camhdWSE/playlist.m3u8` · Archive : `rawdata.oceanobservatories.org/files/RS03ASHS/PN03B/CAMHDA301/` | Financé par la NSF : « OOI data are freely available ». Pas de licence explicite sur la page : crédit « OOI / NSF / UW » recommandé | ✅ **OK**, via notre relais |
+| **Aurores** (remplace UAF) | **AAD – caméra du ciel complet de Davis** (et ASIS de Casey et Mawson) : aurores *australes* | Images fixes du ciel complet, prises sous un dôme. Saisonnier : la nuit polaire, environ de mars à octobre | `antarctica.gov.au/antarctic-operations/webcams/davis/` | © Commonwealth. Les publications et données AAD sont en **CC BY 4.0**, sans licence explicite sur la page webcam | ⚠️ **Probablement OK avec crédit**, confirmation écrite à demander à l'AAD |
+| **Urbain** | **Caltrans uniquement** (NYC DOT exclu) | HLS | voir 4a | voir 4a | ✅ |
+
+Conséquence : le MVP dispose de **2 sources de vrai live** (Caltrans en continu, OOI CAMHD toutes les 3 h). Tout le reste passe en time-lapse.
+
 ### Ce qui n'a pas pu être vérifié à 100 %
 
 - La présence de `isStreaming` dans l'API NPS `/webcams` (il faut une clé API pour tester).
@@ -59,4 +72,7 @@ Ma recommandation : **A pour le MVP, B en parallèle**. Le player affiche un vra
 - [NASA Live](https://www.nasa.gov/live/) · [NASA Images and Media Guidelines](https://www.nasa.gov/nasa-brand-center/images-and-media/) · [NASA Advertising Guidelines](https://www.nasa.gov/nasa-brand-center/advertising-guidelines/)
 - [NOAA Ocean Exploration – Livestreams](https://oceanexplorer.noaa.gov/livestreams/) · [NOAA – 2026 expeditions](https://oceanexplorer.noaa.gov/expedition-2026-expeditions/)
 - [USAP – McMurdo Webcams](https://www.usap.gov/videoclipsandmaps/mcmwebcam.cfm) · [USAP – South Pole Webcams](https://www.usap.gov/videoclipsandmaps/spwebcam.cfm)
+- [NOAA STAR – GOES Image Viewer](https://www.star.nesdis.noaa.gov/goes/index.php) · [GOES-East Full Disk](https://www.star.nesdis.noaa.gov/goes/fulldisk.php?sat=G19)
+- [OOI – Live Video from Axial Seamount](https://oceanobservatories.org/streaming-underwater-video/) · [OOI – accueil (« data are freely available »)](https://oceanobservatories.org/)
+- [AAD – Davis webcam](https://www.antarctica.gov.au/antarctic-operations/webcams/davis/)
 - [AAD – Antarctic webcams](https://www.antarctica.gov.au/antarctic-operations/webcams/) · [AAD Sky Imager dataset (CC BY 4.0)](https://cmr.earthdata.nasa.gov/search/concepts/C1214313009-AU_AADC)
