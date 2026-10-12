@@ -15,6 +15,13 @@ import type { Camera, Logger, MediaStorage } from './types.ts';
 
 const log: Logger = (msg, extra) => console.log(JSON.stringify({ t: new Date().toISOString(), msg, ...extra }));
 
+/** Error text including its cause (fetch hides the real network/TLS reason in `cause`). */
+const describe = (e: unknown): string => {
+  if (!(e instanceof Error)) return String(e);
+  const cause = e.cause as { code?: string; message?: string } | undefined;
+  return cause ? `${e.message} (${cause.code ?? ''} ${cause.message ?? ''})`.replace(/\s+\)/, ')') : e.message;
+};
+
 function required(name: string): string {
   const v = process.env[name];
   if (!v) throw new Error(`missing env ${name}`);
@@ -35,7 +42,7 @@ function every(name: string, ms: number, task: () => Promise<void>): void {
     try {
       await task();
     } catch (e) {
-      log(`${name} failed`, { error: String(e) });
+      log(`${name} failed`, { error: describe(e) });
     }
     setTimeout(run, ms);
   };
@@ -70,8 +77,8 @@ async function syncCatalog(): Promise<void> {
   log('caltrans catalogue synced', { cameras: rows.length });
 }
 if (process.env.SYNC_CALTRANS !== 'false') {
-  await syncCatalog().catch((e) => log('caltrans sync failed', { error: String(e) }));
-  setInterval(() => void syncCatalog().catch((e) => log('caltrans sync failed', { error: String(e) })), 24 * 3_600_000);
+  await syncCatalog().catch((e) => log('caltrans sync failed', { error: describe(e) }));
+  setInterval(() => void syncCatalog().catch((e) => log('caltrans sync failed', { error: describe(e) })), 24 * 3_600_000);
 }
 
 // 2. Featured cameras are captured all the time; the others only when an alert lands on them.

@@ -10,13 +10,20 @@ export class SupabaseStore implements EventStore {
   }
 
   async listCameras(): Promise<Camera[]> {
-    const { data, error } = await this.sb
-      .from('cameras')
-      .select('id, category, feed_kind, feed_url, page_url, refresh_sec, schedule, lat, lon, featured')
-      .eq('active', true)
-      .range(0, 9999);
-    if (error) throw error;
-    return data as Camera[];
+    // The API returns at most 1 000 rows per request: read the catalogue page by page.
+    const PAGE = 1000;
+    const all: Camera[] = [];
+    for (let from = 0; ; from += PAGE) {
+      const { data, error } = await this.sb
+        .from('cameras')
+        .select('id, category, feed_kind, feed_url, page_url, refresh_sec, schedule, lat, lon, featured')
+        .eq('active', true)
+        .order('id')
+        .range(from, from + PAGE - 1);
+      if (error) throw error;
+      all.push(...(data as Camera[]));
+      if (data.length < PAGE) return all;
+    }
   }
 
   async listPendingEvents(sinceMs: number): Promise<PendingEvent[]> {
