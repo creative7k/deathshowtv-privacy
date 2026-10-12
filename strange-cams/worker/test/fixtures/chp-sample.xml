@@ -1,0 +1,40 @@
+<?xml version="1.0" ?>
+<State><Center ID = "LAHB">
+<Dispatch ID = "LACC">
+		<Log ID = "261012LA0001">
+			<LogTime>"Oct 12 2026  9:15AM"</LogTime>
+			<LogType>"1179-Trfc Collision-1141 Enrt"</LogType>
+			<Location>"I110 N / Avenue 26 Ofr"</Location>
+			<LocationDesc>""</LocationDesc>
+			<Area>"Central LA"</Area>
+			<ThomasBrothers>""</ThomasBrothers>
+			<LATLON>"34083900:118221800"</LATLON>
+			<LogDetails><details><DetailTime>"Oct 12 2026  9:16AM"</DetailTime><IncidentDetail>"[1] SILVER SEDAN VS WHITE SUV"</IncidentDetail></details></LogDetails></Log>
+		<Log ID = "261012LA0002">
+			<LogTime>"Oct 12 2026  9:10AM"</LogTime>
+			<LogType>"1182-Trfc Collision-No Inj"</LogType>
+			<Location>"Somewhere Far Rd"</Location>
+			<LocationDesc>""</LocationDesc>
+			<Area>"Barstow"</Area>
+			<ThomasBrothers>""</ThomasBrothers>
+			<LATLON>"34898000:117022000"</LATLON>
+			<LogDetails></LogDetails></Log>
+		<Log ID = "261012LA0003">
+			<LogTime>"Oct 12 2026  9:12AM"</LogTime>
+			<LogType>"MZP-Assist CT with Maintenance"</LogType>
+			<Location>"I5 S"</Location>
+			<LocationDesc>""</LocationDesc>
+			<Area>"Central LA"</Area>
+			<ThomasBrothers>""</ThomasBrothers>
+			<LATLON>"34083900:118221800"</LATLON>
+			<LogDetails></LogDetails></Log>
+		<Log ID = "261012LA0004">
+			<LogTime>"Oct 12 2026  9:14AM"</LogTime>
+			<LogType>"FIRE-Report of Fire"</LogType>
+			<Location>"I5 S / Slauson Ave"</Location>
+			<LocationDesc>""</LocationDesc>
+			<Area>"East LA"</Area>
+			<ThomasBrothers>""</ThomasBrothers>
+			<LATLON>""</LATLON>
+			<LogDetails></LogDetails></Log>
+</Dispatch></Center></State>

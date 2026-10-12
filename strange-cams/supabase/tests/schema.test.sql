@@ -136,6 +136,22 @@ begin
   assert (select title from public.events where id = ev) = 'Phénomène inexpliqué', 'dominant type wins';
 end $$;
 
+
+-- 10. Alert events: one event per official alert, created by the service (not clients).
+reset role;
+insert into public.events (camera_id, origin, title, alert_source, alert_ref, alert_level, alert_active)
+values ('caltrans-d7-196', 'alert', 'Accident', 'chp', '261011LA0001', 3, true);
+do $$ begin
+  insert into public.events (camera_id, origin, title, alert_source, alert_ref)
+  values ('caltrans-d7-196', 'alert', 'Accident (doublon)', 'chp', '261011LA0001');
+  raise exception 'duplicate alert should fail';
+exception when unique_violation then null;
+end $$;
+set role anon;
+do $$ begin
+  assert (select count(*) from public.events where origin = 'alert') = 1, 'alert events are public';
+  assert (select count(*) from public.cameras where featured) = 8, 'seeded cameras are featured';
+end $$;
 reset role;
 \o
 \echo 'ALL SCHEMA TESTS PASSED'

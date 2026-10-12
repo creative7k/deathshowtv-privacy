@@ -7,6 +7,8 @@ import type { Camera, EventStore, Logger, MediaStorage, PendingEvent } from './t
 
 const HLS_BEFORE_MS = 30_000;
 const HLS_AFTER_MS = 15_000;
+/** Alerts are recorded from the moment they land: the replay covers the minute that follows. */
+const HLS_ALERT_AFTER_MS = 60_000;
 const MAX_ATTEMPTS = 3;
 const MIN_FRAMES = 2;
 
@@ -45,7 +47,7 @@ export class Clipper {
       const src = this.sources.get(ev.camera_id);
       if (!src) continue;
       const started = Date.parse(ev.started_at);
-      const win = this.window(src.camera);
+      const win = this.window(src.camera, ev.origin);
       if (now < started + win.afterMs) continue; // post-event footage not captured yet
 
       try {
@@ -61,10 +63,11 @@ export class Clipper {
     return done;
   }
 
-  private window(camera: Camera): { beforeMs: number; afterMs: number } {
-    return camera.feed_kind === 'hls'
-      ? { beforeMs: HLS_BEFORE_MS, afterMs: HLS_AFTER_MS }
-      : imageWindow(camera.refresh_sec ?? 60);
+  private window(camera: Camera, origin?: PendingEvent['origin']): { beforeMs: number; afterMs: number } {
+    if (camera.feed_kind === 'hls') {
+      return { beforeMs: HLS_BEFORE_MS, afterMs: origin === 'alert' ? HLS_ALERT_AFTER_MS : HLS_AFTER_MS };
+    }
+    return imageWindow(camera.refresh_sec ?? 60);
   }
 
   private async clipEvent(ev: PendingEvent, src: CameraSources, from: number, to: number): Promise<boolean> {

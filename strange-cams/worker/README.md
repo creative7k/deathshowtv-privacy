@@ -2,9 +2,25 @@
 
 Service Node.js (+ ffmpeg) qui tourne en continu à côté de Supabase :
 
-1. **Caméras « image »** : télécharge l'image de chaque caméra à son rythme (jamais plus d'une fois
+0. **Catalogue** : importe au démarrage (puis chaque jour) toutes les caméras officielles Caltrans
+   (12 districts de Californie), avec leur position GPS.
+1. **Alertes officielles**, interrogées en continu :
+   | Source | Quoi | Fréquence | Caméra choisie |
+   |---|---|---|---|
+   | CHP (police routière de Californie) | accidents, incendies, routes inondées, dangers | 1 min | la plus proche, à moins de 1 à 2 km |
+   | USGS | séismes de magnitude ≥ 4 | 1 min | la plus proche, à moins de 100 km |
+   | NOAA / NWS | alertes météo sévères et extrêmes (tornade, orage violent, crue…) | 2 min | une caméra dans la zone (vidéo en priorité) |
+   | NOAA / SWPC | tempêtes magnétiques (Kp ≥ 6) : aurores probables | 10 min | caméra Aurores |
+
+   Dès qu'une alerte tombe : l'événement est **publié tout de suite** (l'app montre la caméra en
+   direct, en tête du feed, badge ALERTE), la caméra est **enregistrée** pendant 4 minutes, puis le
+   clip **rediffusé** remplace le direct. Une même alerte ne crée jamais deux événements. Seuls le
+   type d'incident et le lieu sont repris : les détails libres de la CHP (véhicules, personnes) ne le
+   sont jamais.
+
+2. **Caméras vedettes** (`featured`, enregistrées en continu) — **caméras « image »** : télécharge l'image de chaque caméra à son rythme (jamais plus d'une fois
    toutes les 10 s), ignore les images identiques et garde un historique glissant sur disque.
-2. **Caméras live (HLS)** : garde les ~3 dernières minutes du flux (anneau de segments, sans
+   — **caméras live (HLS)** : garde les ~3 dernières minutes du flux (anneau de segments, sans
    ré-encodage). Une seule connexion vers l'institution, quel que soit le nombre de spectateurs.
 3. **Événements** : toutes les 10 s, cherche les événements publiés sans clip. Une fois la fenêtre
    après l'événement capturée, fabrique le clip (time-lapse 720p à 6 images/s, ou replay du live

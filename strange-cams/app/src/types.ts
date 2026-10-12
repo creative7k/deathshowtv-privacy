@@ -37,7 +37,7 @@ export type Camera = {
   licence: string;
 };
 
-export type EventOrigin = 'user' | 'ai';
+export type EventOrigin = 'user' | 'ai' | 'alert';
 
 export type FeedEvent = {
   id: string;

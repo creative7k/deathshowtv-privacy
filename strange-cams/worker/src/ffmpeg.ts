@@ -18,6 +18,9 @@ export function run(cmd: string, args: string[], timeoutMs = 120_000): Promise<s
   });
 }
 
+/** Entry for an ffmpeg concat list; forward slashes keep Windows paths valid there. */
+const listEntry = (file: string) => `file '${file.replace(/\\/g, '/').replace(/'/g, "'\\''")}'`;
+
 const ENCODE = ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', '26', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an'];
 
 /** Builds a looping time-lapse MP4 (720p, `fps` images per second) from still frames. */
@@ -26,7 +29,7 @@ export async function timelapse(frames: string[], out: string, listFile: string,
   const d = (1 / fps).toFixed(4);
   // The concat demuxer ignores the duration of the last entry, so it is listed twice.
   const lines = [...frames, frames[frames.length - 1]].map((f, i, all) =>
-    i < all.length - 1 ? `file '${f}'\nduration ${d}` : `file '${f}'`,
+    i < all.length - 1 ? `${listEntry(f)}\nduration ${d}` : listEntry(f),
   );
   await writeFile(listFile, lines.join('\n') + '\n');
   await run('ffmpeg', [
@@ -39,7 +42,7 @@ export async function timelapse(frames: string[], out: string, listFile: string,
 /** Joins recorded HLS segments into one MP4 without re-encoding. */
 export async function joinSegments(segments: string[], out: string, listFile: string): Promise<void> {
   if (segments.length === 0) throw new Error('no segments');
-  await writeFile(listFile, segments.map((s) => `file '${s}'`).join('\n') + '\n');
+  await writeFile(listFile, segments.map(listEntry).join('\n') + '\n');
   await run('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', listFile, '-c', 'copy', '-an', '-movflags', '+faststart', out]);
 }
 

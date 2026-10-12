@@ -14,7 +14,8 @@ App mobile (iOS + Android) : un feed vertical façon TikTok qui ne montre **que 
 Sans configuration, l'app tourne en **mode démo** (données locales, bandeau « Données de démonstration »).
 
 1. Créer un projet sur [supabase.com](https://supabase.com).
-2. **SQL Editor** : exécuter `supabase/migrations/20261011000000_init.sql`, puis `supabase/seed.sql`.
+2. **SQL Editor** : exécuter, dans l'ordre, `supabase/migrations/20261011000000_init.sql`,
+   `supabase/migrations/20261012000000_alerts.sql`, puis `supabase/seed.sql`.
    (Ou, avec la CLI Supabase : `supabase link` puis `supabase db push`.)
 3. **Authentication → Sign In / Providers** : activer **Allow anonymous sign-ins**.
 4. **Database → Publications** : vérifier que la table `events` est cochée dans `supabase_realtime`
@@ -56,5 +57,8 @@ supabase/tests/run-local.sh   # tests du schéma sur un Postgres local (createdb
 - [x] Étape 2 : Supabase (schéma, RLS, auth anonyme, API du feed), testé sur Postgres local
 - [x] Étape 3 : signalement → événement, vote vrai/faux, compteurs en temps réel (code prêt, à valider sur un vrai projet Supabase)
 - [x] Étape 4 : worker d'ingestion (images → clips time-lapse, replay des flux live), testé avec des sources simulées
+- [x] Phase 2a : milliers de caméras (catalogue Caltrans) + alertes officielles (CHP, USGS, NOAA) → publication immédiate, enregistrement, rediffusion
+- [ ] Floutage automatique des visages et plaques sur les clips d'accident
+- [ ] Phase 2b : détection de changement d'image sur les caméras vedettes
 - [ ] Relais live pour les spectateurs : l'app lit encore les flux HLS directement chez Caltrans / OOI (à faire passer par notre relais avant la mise en prod)
 - [ ] Phase 2 : détection IA, alertes collectives, floutage

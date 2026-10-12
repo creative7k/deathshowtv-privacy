@@ -41,7 +41,7 @@ export function ReportSheet({ visible, cameraName, onClose, onSubmit }: Props) {
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
-  sheet: { backgroundColor: '#151821', padding: 20, paddingBottom: 36, borderTopLeftRadius: 20, borderTopRightRadius: 20 },
+  sheet: { width: '100%', maxWidth: 480, alignSelf: 'center', backgroundColor: '#151821', padding: 20, paddingBottom: 36, borderTopLeftRadius: 20, borderTopRightRadius: 20 },
   handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: '#3A4152', marginBottom: 14 },
   title: { color: '#fff', fontSize: 20, fontWeight: '800' },
   subtitle: { color: '#8A93A6', fontSize: 14, marginTop: 2, marginBottom: 16 },

@@ -8,7 +8,8 @@ import { ActionRail } from './ActionRail';
 import type { Vote } from '../api/feedApi';
 
 type Props = {
-  event: FeedEvent;
+  /** Absent for a plain camera card (watch live and report). */
+  event?: FeedEvent;
   camera: Camera;
   height: number;
   active: boolean;
@@ -18,7 +19,7 @@ type Props = {
   /** Reference time for "x min ago" labels. */
   now: number;
   bottomInset: number;
-  onVote: (v: Vote) => void;
+  onVote?: (v: Vote) => void;
   onReport: () => void;
 };
 
@@ -48,15 +49,15 @@ export const FeedItem = memo(function FeedItem({
 
   return (
     <View style={[styles.item, { height }]}>
-      {mounted ? <CameraMedia camera={camera} clipUrl={event.clipUrl} active={active} /> : null}
+      {mounted ? <CameraMedia camera={camera} clipUrl={event?.clipUrl} active={active} /> : null}
       <View style={styles.shade} pointerEvents="none" />
 
       <View style={[styles.bottom, { paddingBottom: bottomInset + 20 }]} pointerEvents="box-none">
         <View style={styles.info} pointerEvents="none">
           <View style={styles.badges}>
             <Badge text={`${category.emoji} ${category.label}`} color={category.color} />
-            {event.paranormal && <Badge text="👁️ Paranormal" color={categoryById('paranormal').color} />}
-            {event.clipUrl ? (
+            {event?.paranormal && <Badge text="👁️ Paranormal" color={categoryById('paranormal').color} />}
+            {event?.clipUrl ? (
               <Badge text={camera.feed.kind === 'hls' ? '▶ REPLAY' : '◷ TIME-LAPSE'} color="#9AA4B8" />
             ) : (
               <Badge
@@ -65,22 +66,32 @@ export const FeedItem = memo(function FeedItem({
                 solid={isLive}
               />
             )}
-            {event.alertActive && <Badge text={`⚠ ALERTE ${event.alertLevel}`} color="#FFB020" solid />}
+            {event?.alertActive && <Badge text={`⚠ ALERTE ${event.alertLevel}`} color="#FFB020" solid />}
           </View>
-          <Text style={styles.title}>{event.title}</Text>
-          <Text style={styles.desc}>{event.description}</Text>
-          <Text style={styles.meta}>
-            {camera.name} · {camera.place}
-          </Text>
-          <Text style={styles.meta}>
-            {ago(now - event.startedAt)} · Source : {camera.credit} ({camera.licence})
-          </Text>
+          {event ? (
+            <>
+              <Text style={styles.title}>{event.title}</Text>
+              <Text style={styles.desc}>{event.description}</Text>
+              <Text style={styles.meta}>
+                {camera.name} · {camera.place}
+              </Text>
+              <Text style={styles.meta}>
+                {ago(now - event.startedAt)} · Source : {camera.credit} ({camera.licence})
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.title}>{camera.name}</Text>
+              <Text style={styles.desc}>{camera.place}</Text>
+              <Text style={styles.hint}>Tu vois quelque chose d’étrange ? Signale-le 🚩</Text>
+              <Text style={styles.meta}>
+                Source : {camera.credit} ({camera.licence})
+              </Text>
+            </>
+          )}
         </View>
         <ActionRail
-          votesUp={event.votesUp}
-          votesDown={event.votesDown}
-          myVote={myVote}
-          onVote={onVote}
+          votes={event && onVote ? { up: event.votesUp, down: event.votesDown, mine: myVote, onVote } : undefined}
           onReport={onReport}
         />
       </View>
@@ -122,4 +133,5 @@ const styles = StyleSheet.create({
   },
   desc: { color: 'rgba(255,255,255,0.9)', fontSize: 15, marginTop: 4 },
   meta: { color: 'rgba(255,255,255,0.65)', fontSize: 12, marginTop: 6 },
+  hint: { color: '#FFD23F', fontSize: 14, fontWeight: '700', marginTop: 8 },
 });

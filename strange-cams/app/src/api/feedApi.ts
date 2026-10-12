@@ -21,8 +21,7 @@ export async function loadFeed(sb: SupabaseClient): Promise<{
   myVotes: Record<string, Vote>;
 }> {
   const since = new Date(Date.now() - FEED_WINDOW_MS).toISOString();
-  const [cams, evs, votes] = await Promise.all([
-    sb.from('cameras').select('*'),
+  const [evs, votes] = await Promise.all([
     sb
       .from('events')
       .select('id, camera_id, origin, title, description, paranormal, started_at, votes_up, votes_down, alert_level, alert_active, clip_url, poster_url')
@@ -31,9 +30,16 @@ export async function loadFeed(sb: SupabaseClient): Promise<{
       .limit(200),
     sb.from('votes').select('event_id, value'),
   ]);
-  if (cams.error) throw cams.error;
   if (evs.error) throw evs.error;
   if (votes.error) throw votes.error;
+
+  // The catalogue holds thousands of cameras: only load the featured ones and those with an event.
+  const eventCameraIds = [...new Set((evs.data as EventRow[]).map((e) => e.camera_id))];
+  const cams = await sb
+    .from('cameras')
+    .select('*')
+    .or(eventCameraIds.length ? `featured.eq.true,id.in.(${eventCameraIds.join(',')})` : 'featured.eq.true');
+  if (cams.error) throw cams.error;
 
   const myVotes: Record<string, Vote> = {};
   for (const v of votes.data as { event_id: string; value: -1 | 1 }[]) myVotes[v.event_id] = v.value;
@@ -49,6 +55,12 @@ export async function loadFeed(sb: SupabaseClient): Promise<{
  * Sets, changes or removes the current user's vote.
  * Update-then-insert rather than upsert: clients may only update the `value` column.
  */
+export async function loadCamera(sb: SupabaseClient, id: string): Promise<Camera | null> {
+  const { data, error } = await sb.from('cameras').select('*').eq('id', id).maybeSingle();
+  if (error) throw error;
+  return data ? rowToCamera(data as CameraRow) : null;
+}
+
 export async function castVote(sb: SupabaseClient, eventId: string, value: Vote): Promise<void> {
   if (value === 0) {
     const { error } = await sb.from('votes').delete().eq('event_id', eventId);

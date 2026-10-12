@@ -1,16 +1,17 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View, type ViewToken } from 'react-native';
+import { ActivityIndicator, FlatList, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View, type ViewToken } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { Camera, CategoryId, FeedEvent, ReportType } from '../types';
+import type { Camera, CategoryId, ReportType } from '../types';
 import { useFeed } from '../feed/useFeed';
+import { buildEntries, type FeedEntry } from '../feed/entries';
 import { FeedItem } from '../components/FeedItem';
 import { CategoryBar } from '../components/CategoryBar';
 import { ReportSheet } from '../components/ReportSheet';
 
 const VIEWABILITY = { itemVisiblePercentThreshold: 60 };
 
-const matches = (e: FeedEvent, camera: Camera, cat: CategoryId | null) =>
-  cat === null || (cat === 'paranormal' ? e.paranormal : camera.category === cat);
+/** On a computer the feed keeps a phone-like column, centred (like TikTok on desktop). */
+const WEB_MAX_WIDTH = 480;
 
 const REPORT_MESSAGES = {
   event: 'Événement confirmé · il arrive dans le feed !',
@@ -19,27 +20,21 @@ const REPORT_MESSAGES = {
 } as const;
 
 export function FeedScreen() {
-  const { height } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+  const columnWidth = Platform.OS === 'web' ? Math.min(width, WEB_MAX_WIDTH) : width;
   const insets = useSafeAreaInsets();
   const feed = useFeed();
 
   const [category, setCategory] = useState<CategoryId | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [reporting, setReporting] = useState<FeedEvent | null>(null);
+  const [reporting, setReporting] = useState<Camera | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const listRef = useRef<FlatList<FeedEvent>>(null);
+  const listRef = useRef<FlatList<FeedEntry>>(null);
 
-  const events = useMemo(
-    () =>
-      feed.events.filter((e) => {
-        const camera = feed.cameras[e.cameraId];
-        return camera !== undefined && matches(e, camera, category);
-      }),
-    [feed.events, feed.cameras, category],
-  );
+  const entries = useMemo(() => buildEntries(feed.events, feed.cameras, category), [feed.events, feed.cameras, category]);
 
   // Must keep a stable identity: FlatList does not support changing it on the fly.
-  const onViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: ViewToken<FeedEvent>[] }) => {
+  const onViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: ViewToken<FeedEntry>[] }) => {
     const first = viewableItems.find((v) => v.isViewable);
     if (first?.index != null) setActiveIndex(first.index);
   }, []);
@@ -57,7 +52,7 @@ export function FeedScreen() {
 
   const submitReport = async (type: ReportType) => {
     if (!reporting) return;
-    const cameraId = reporting.cameraId;
+    const cameraId = reporting.id;
     setReporting(null);
     try {
       const result = await feed.report(cameraId, type);
@@ -69,22 +64,23 @@ export function FeedScreen() {
 
   return (
     <View style={styles.screen}>
+      <View style={[styles.column, { width: columnWidth }]}>
       <FlatList
         ref={listRef}
-        data={events}
-        keyExtractor={(e) => e.id}
+        data={entries}
+        keyExtractor={(e) => e.key}
         renderItem={({ item, index }) => (
           <FeedItem
-            event={item}
-            camera={feed.cameras[item.cameraId]}
+            event={item.type === 'event' ? item.event : undefined}
+            camera={item.camera}
             height={height}
             active={index === activeIndex}
             mounted={Math.abs(index - activeIndex) <= 1}
-            myVote={feed.myVotes[item.id] ?? 0}
+            myVote={item.type === 'event' ? (feed.myVotes[item.event.id] ?? 0) : 0}
             now={feed.openedAt}
             bottomInset={insets.bottom}
-            onVote={(v) => void feed.vote(item.id, v)}
-            onReport={() => setReporting(item)}
+            onVote={item.type === 'event' ? (v) => void feed.vote(item.event.id, v) : undefined}
+            onReport={() => setReporting(item.camera)}
           />
         )}
         extraData={{ activeIndex, myVotes: feed.myVotes }}
@@ -127,9 +123,11 @@ export function FeedScreen() {
         </View>
       )}
 
+      </View>
+
       <ReportSheet
         visible={reporting !== null}
-        cameraName={reporting ? (feed.cameras[reporting.cameraId]?.name ?? '') : ''}
+        cameraName={reporting?.name ?? ''}
         onClose={() => setReporting(null)}
         onSubmit={(type) => void submitReport(type)}
       />
@@ -138,7 +136,8 @@ export function FeedScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#0B0D12' },
+  screen: { flex: 1, backgroundColor: '#000' },
+  column: { flex: 1, alignSelf: 'center', backgroundColor: '#0B0D12', overflow: 'hidden' },
   top: { position: 'absolute', top: 0, left: 0, right: 0, gap: 8 },
   logo: { color: '#fff', fontSize: 15, fontWeight: '900', letterSpacing: 3, textAlign: 'center' },
   demo: { color: 'rgba(255,255,255,0.55)', fontSize: 11, textAlign: 'center' },

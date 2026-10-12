@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Camera, FeedEvent, ReportType } from '../types';
 import { supabase } from '../api/supabase';
-import { castVote, ensureSession, loadFeed, submitReport, type ReportResult, type Vote } from '../api/feedApi';
+import { castVote, ensureSession, loadCamera, loadFeed, submitReport, type ReportResult, type Vote } from '../api/feedApi';
 import { applyVoteDelta, rowToEvent, type EventRow } from '../api/mappers';
 import { CAMERAS } from '../data/cameras';
 import { DEMO_EVENTS } from '../data/demoEvents';
@@ -96,6 +96,10 @@ export function useFeed() {
         setState((s) =>
           s.events.some((e) => e.id === row.id) ? s : { ...s, events: [...s.events.slice(0, 1), row, ...s.events.slice(1)] },
         );
+        // Alerts can land on any of the thousands of cameras: fetch it if we don't have it yet.
+        void loadCamera(sb, row.cameraId)
+          .then((camera) => camera && setState((s) => (s.cameras[camera.id] ? s : { ...s, cameras: { ...s.cameras, [camera.id]: camera } })))
+          .catch(() => {});
       })
       .subscribe();
     return () => {

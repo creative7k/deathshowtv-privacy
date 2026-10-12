@@ -2,7 +2,7 @@ import { mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { run } from '../src/ffmpeg.ts';
-import type { Camera, EventStore, PendingEvent } from '../src/types.ts';
+import type { Camera, CameraUpsert, EventStore, NewAlertEvent, PendingEvent } from '../src/types.ts';
 
 export const tempDir = (prefix: string) => mkdtemp(path.join(tmpdir(), `sc-${prefix}-`));
 
@@ -14,7 +14,19 @@ export async function makeJpegs(dir: string, n: number): Promise<Buffer[]> {
 
 export class FakeStore implements EventStore {
   cameras: Camera[] = [];
-  events: (PendingEvent & { clip_url?: string; poster_url?: string })[] = [];
+  events: (PendingEvent & { clip_url?: string; poster_url?: string; alert?: NewAlertEvent; alert_active?: boolean })[] = [];
+  upserted: CameraUpsert[] = [];
+
+  async createAlertEvent(ev: NewAlertEvent) {
+    if (this.events.some((e) => e.alert?.alert_source === ev.alert_source && e.alert?.alert_ref === ev.alert_ref)) return null;
+    const id = `alert-${this.events.length + 1}`;
+    this.events.push({ id, camera_id: ev.camera_id, started_at: new Date().toISOString(), origin: 'alert', alert: ev, alert_active: true });
+    return id;
+  }
+  async expireAlerts() {}
+  async upsertCameras(rows: CameraUpsert[]) {
+    this.upserted.push(...rows);
+  }
 
   async listCameras() {
     return this.cameras;

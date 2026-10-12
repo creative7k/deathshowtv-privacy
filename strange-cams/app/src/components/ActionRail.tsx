@@ -2,33 +2,35 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Vote } from '../api/feedApi';
 
 type Props = {
-  votesUp: number;
-  votesDown: number;
-  myVote: Vote;
-  onVote: (v: Vote) => void;
+  /** Only events can be voted on; camera cards just offer reporting. */
+  votes?: { up: number; down: number; mine: Vote; onVote: (v: Vote) => void };
   onReport: () => void;
 };
 
 const compact = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
 
 /** Right-hand action column: real/fake alert vote and report button. */
-export function ActionRail({ votesUp, votesDown, myVote, onVote, onReport }: Props) {
+export function ActionRail({ votes, onReport }: Props) {
   return (
     <View style={styles.rail}>
-      <Action
-        icon="👍"
-        label={compact(votesUp)}
-        caption="Vrai"
-        selected={myVote === 1}
-        onPress={() => onVote(myVote === 1 ? 0 : 1)}
-      />
-      <Action
-        icon="👎"
-        label={compact(votesDown)}
-        caption="Faux"
-        selected={myVote === -1}
-        onPress={() => onVote(myVote === -1 ? 0 : -1)}
-      />
+      {votes && (
+        <>
+          <Action
+            icon="👍"
+            label={compact(votes.up)}
+            caption="Vrai"
+            selected={votes.mine === 1}
+            onPress={() => votes.onVote(votes.mine === 1 ? 0 : 1)}
+          />
+          <Action
+            icon="👎"
+            label={compact(votes.down)}
+            caption="Faux"
+            selected={votes.mine === -1}
+            onPress={() => votes.onVote(votes.mine === -1 ? 0 : -1)}
+          />
+        </>
+      )}
       <Action icon="🚩" label="Signaler" onPress={onReport} />
     </View>
   );
