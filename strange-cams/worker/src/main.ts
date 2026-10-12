@@ -104,7 +104,19 @@ const watch = (name: string, ms: number, read: () => Promise<Alert[]>) =>
     if (cameras.length === 0) return;
     await dispatcher.handle(await read(), cameras);
   });
-watch('chp incidents', 60_000, async () => parseChp(await fetchText(CHP_FEED)));
+// CHP does not answer connections from outside the US: by default the feed goes through the
+// project's « chp-feed » Edge Function, run in California (x-region: us-west-1). CHP_DIRECT=true skips it.
+const chpRelay = `${required('SUPABASE_URL')}/functions/v1/chp-feed?forceFunctionRegion=us-west-1`;
+async function readChp(): Promise<string> {
+  if (process.env.CHP_DIRECT === 'true') return fetchText(CHP_FEED);
+  const res = await fetch(chpRelay, {
+    headers: { 'x-region': 'us-west-1', apikey: required('SUPABASE_SERVICE_ROLE_KEY'), 'user-agent': USER_AGENT },
+    signal: AbortSignal.timeout(40_000),
+  });
+  if (!res.ok) throw new Error(`chp-feed relay: HTTP ${res.status} ${(await res.text()).slice(0, 200)}`);
+  return res.text();
+}
+watch('chp incidents', 60_000, async () => parseChp(await readChp()));
 watch('usgs earthquakes', 60_000, async () => parseUsgs((await fetchJson(USGS_FEED)) as never));
 watch('nws weather', 120_000, async () => parseNws((await fetchJson(NWS_FEED)) as never));
 watch('swpc aurora', 600_000, async () => parseSwpc(await fetchJson(SWPC_FEED)));

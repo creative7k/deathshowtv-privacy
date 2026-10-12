@@ -29,6 +29,15 @@ Service Node.js (+ ffmpeg) qui tourne en continu à côté de Supabase :
 4. **Nettoyage** : supprime chaque heure les clips de plus de `CLIP_RETENTION_DAYS` jours (3 par défaut)
    pour rester sous le 1 Go gratuit.
 
+## Relais CHP (si le worker tourne hors des États-Unis)
+
+Le serveur de la CHP ne répond pas aux connexions venant d'Europe. Le worker passe donc par l'Edge
+Function `supabase/functions/chp-feed`, exécutée en Californie (gratuit : 500 000 appels/mois).
+Déploiement depuis le tableau de bord Supabase : **Edge Functions → Deploy a new function → Via
+Editor**, nom `chp-feed`, coller le contenu de `index.ts`, **Deploy**, puis dans les réglages de la
+fonction désactiver **Verify JWT** (elle ne relaie qu'un flux public). Test :
+`https://<projet>.supabase.co/functions/v1/chp-feed?forceFunctionRegion=us-west-1`
+
 ## Lancer gratuitement sur ton propre PC
 
 Le worker n'a besoin que d'une machine allumée : ton PC suffit (gratuit). Il consomme peu
