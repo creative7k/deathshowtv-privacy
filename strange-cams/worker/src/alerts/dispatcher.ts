@@ -17,6 +17,8 @@ const RADIUS_KM: Record<Alert['kind'], number> = {
 const MAX_AGE_MS = 30 * 60_000;
 /** How long a camera is recorded after an alert lands on it. */
 export const ALERT_RECORDING_MS = 4 * 60_000;
+/** One camera, one event: CHP often logs the same incident several times (one per caller/unit). */
+const CAMERA_COOLDOWN_MS = 15 * 60_000;
 
 export function pickCamera(alert: Alert, cameras: Camera[]): Camera | null {
   if (alert.kind === 'aurora') {
@@ -42,6 +44,7 @@ const score = (c: Camera) => (c.feed_kind === 'hls' ? 2 : 0) + (c.featured ? 1 :
  */
 export class AlertDispatcher {
   private readonly seen = new Set<string>();
+  private readonly lastOnCamera = new Map<string, number>();
   private readonly store: EventStore;
   private readonly startRecording: (camera: Camera) => void;
   private readonly log: Logger;
@@ -63,6 +66,7 @@ export class AlertDispatcher {
 
       const camera = pickCamera(alert, cameras);
       if (!camera) continue;
+      if (now - (this.lastOnCamera.get(camera.id) ?? -Infinity) < CAMERA_COOLDOWN_MS) continue;
 
       const id = await this.store.createAlertEvent({
         camera_id: camera.id,
@@ -74,6 +78,7 @@ export class AlertDispatcher {
         paranormal: false,
       });
       if (!id) continue; // already published (e.g. after a restart)
+      this.lastOnCamera.set(camera.id, now);
       this.startRecording(camera);
       created.push(id);
       this.log('alert published', { event: id, source: alert.source, kind: alert.kind, camera: camera.id });

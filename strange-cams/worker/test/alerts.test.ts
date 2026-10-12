@@ -104,6 +104,8 @@ test('dispatcher publishes once, records at once, skips stale alerts', async () 
   assert.equal(store.events[0].alert?.alert_level, 3);
 
   assert.deepEqual(await d.handle([accident('x1', now - 60_000)], cams, now), [], 'same alert seen again');
+  assert.deepEqual(await d.handle([accident('x2', now - 30_000)], cams, now), [], 'same camera within 15 min: one event only');
+  assert.equal((await d.handle([accident('x3', now)], cams, now + 16 * 60_000)).length, 1, 'camera free again after 15 min');
   const restarted = new AlertDispatcher(store, () => {}, silentLog);
   assert.deepEqual(await restarted.handle([accident('x1', now - 60_000)], cams, now), [], 'database dedupe after a restart');
 });
