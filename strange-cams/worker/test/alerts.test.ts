@@ -71,8 +71,8 @@ test('Caltrans catalogue: video when available, still image otherwise, out-of-se
   });
   const rows = parseCaltrans({ data: [rec('1', 'https://v/1.m3u8', 'https://i/1.jpg'), rec('2', '', 'https://i/2.jpg', 'false'), rec('3', '', '')] });
   assert.deepEqual(rows.map((r) => [r.id, r.feed_kind, r.feed_url, r.refresh_sec, r.active]), [
-    ['caltrans-d7-1', 'hls', 'https://v/1.m3u8', null, true],
-    ['caltrans-d7-2', 'image', 'https://i/2.jpg', 120, false],
+    ['ct-d7-1', 'hls', 'https://v/1.m3u8', null, true],
+    ['ct-d7-2', 'image', 'https://i/2.jpg', 120, false],
   ]);
 });
 

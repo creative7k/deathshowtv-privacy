@@ -28,7 +28,8 @@ export function parseCaltrans(json: { data: Record[] } | Record[]): CameraUpsert
     const img = cctv.imageData.static.currentImageURL?.trim();
     if (!Number.isFinite(lat) || !Number.isFinite(lon) || (!hls && !img)) continue;
     out.push({
-      id: `caltrans-d${Number(loc.district)}-${cctv.index}`,
+      // Own prefix: must never collide with hand-picked featured cameras (e.g. "caltrans-d7-196").
+      id: `ct-d${Number(loc.district)}-${cctv.index}`,
       category: 'urbain',
       name: loc.locationName,
       place: loc.nearbyPlace ? `${loc.nearbyPlace}, Californie` : 'Californie',
